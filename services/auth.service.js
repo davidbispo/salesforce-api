@@ -2,10 +2,13 @@ const Service = require('moleculer').Service;
 const { MoleculerClientError } = require('moleculer').Errors;
 const jsonwebtoken = require('jsonwebtoken');
 const SECRET = 'pso0298di-ldaspdaps-apsodkposk';
+const JobspeakerClient = require('./JobspeakerClient');
 
 class AuthService extends Service {
   constructor (broker) {
     super(broker);
+
+    this.client = new JobspeakerClient(process.env.environment);
 
     this.parseServiceSchema({
       name: 'auth',
@@ -36,11 +39,29 @@ class AuthService extends Service {
     return jsonwebtoken.verify(ctx.params.token, SECRET);
   }
 
-  refresh (ctx) {
+  async refresh (ctx) {
     const claims = jsonwebtoken.verify(ctx.params.refreshToken, SECRET);
-    if (typeof (claims) !== 'object' || !claims.uid) {
+    if (typeof (claims) !== 'object' || !claims.uid || !claims.key) {
       ctx.meta.$statusCode = 403;
       return new MoleculerClientError('Forbidden', 403);
+    } else {
+      let token;
+      try {
+        token = await this.client.auth(claims.uid, claims.key);
+      } catch {
+        ctx.meta.$statusCode = 403;
+        return new MoleculerClientError('Forbidden', 403);
+      }
+      return {
+        token: jsonwebtoken.sign(
+          {
+            authId: token.token,
+            exp: Math.floor(Date.now() / 1000) + (60 * 60 * 6)
+          },
+          SECRET
+        ),
+        refreshToken: ctx.params.refreshToken
+      };
     }
   }
 
