@@ -3,7 +3,6 @@ const { MoleculerClientError } = require('moleculer').Errors;
 const jsonwebtoken = require('jsonwebtoken');
 const SECRET = 'pso0298di-ldaspdaps-apsodkposk';
 const JobspeakerClient = require('./JobspeakerClient');
-
 class AuthService extends Service {
   constructor (broker) {
     super(broker);
