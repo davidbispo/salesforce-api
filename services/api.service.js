@@ -34,7 +34,7 @@ module.exports = {
         mergeParams: true,
 
         // Enable authentication. Implement the logic into `authenticate` method. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Authentication
-        authentication: false,
+        authentication: true,
 
         // Enable authorization. Implement the logic into `authorize` method. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Authorization
         authorization: false,
@@ -102,12 +102,6 @@ module.exports = {
     logResponseData: null,
 
     // Serve assets from "public" folder. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Serve-static-files
-    assets: {
-      folder: 'public',
-
-      // Options to `server-static` module
-      options: {}
-    }
   },
 
   methods: {
@@ -127,22 +121,20 @@ module.exports = {
     async authenticate (ctx, route, req) {
       // Read the token from header
       const auth = req.headers.authorization;
-
       if (auth && auth.startsWith('Bearer')) {
-        const token = auth.slice(7);
-
+        const token = auth.slice(7).trim();
+        const claims = await ctx.call('v2.auth.verify', { token });
         // Check the token. Tip: call a service which verify the token. E.g. `accounts.resolveToken`
-        if (token == '123456') {
+        if (claims.authId) {
           // Returns the resolved user. It will be set to the `ctx.meta.user`
-          return { id: 1, name: 'John Doe' };
+          return { token: claims.authId };
         } else {
           // Invalid token
           throw new ApiGateway.Errors.UnAuthorizedError(ApiGateway.Errors.ERR_INVALID_TOKEN);
         }
       } else {
         // No token. Throw an error or do nothing if anonymous access is allowed.
-        // throw new E.UnAuthorizedError(E.ERR_NO_TOKEN);
-        return null;
+        throw new ApiGateway.Errors.UnAuthorizedError(ApiGateway.Errors.ERR_NO_TOKEN);
       }
     },
 

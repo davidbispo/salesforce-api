@@ -30,7 +30,8 @@ class AuthService extends Service {
           },
           handler: this.refresh
         },
-        sign: this.sign
+        sign: this.sign,
+        verify: this.verify
       }
     });
   }

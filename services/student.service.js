@@ -24,7 +24,7 @@ class StudentService extends Service {
 
   list (ctx) {
     return this.client.listStudents(
-      '6fdd71a4-8750-4416-9f6c-49cbf80385cf',
+      ctx.meta.user.token,
       ctx.params.limit,
       ctx.params.offset
     );
